@@ -1,12 +1,11 @@
 "use strict";
 
-import { getQuestionData, sumAndMax, sumTopThree } from "../common.js";
+import { getQuestionData } from "../common.js";
 
 // https://adventofcode.com/2022/day/3
 
 export function day3() {
   let data = getQuestionData("https://adventofcode.com/2022/day/3/input");
-
   return data
     .then((response) => {
       let rucksacksArray = response.data.split("\n");
@@ -29,7 +28,7 @@ function test() {
     "PmmdzqPrVvPwwTWBwg",
     "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn",
     "ttgJtRGJQctTZtZT",
-    "CrZsJsPPZsGzwwsLwLmpwMDw"
+    "CrZsJsPPZsGzwwsLwLmpwMDw",
   ];
   return processRucksacksArray(testData);
 }

@@ -36,7 +36,8 @@ function test() {
     "8000",
     "9000",
     "",
-    "10000"
+    "10000",
+    ""
   ];
 
   return processCaloriesArray(testData);
@@ -54,7 +55,6 @@ function processCaloriesArray(array) {
       sum += calories;
     }
   });
-  maxes.push(sum);
 
   let sorted = maxes.sort((a, b) => b - a);
 
