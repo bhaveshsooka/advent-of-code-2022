@@ -84,8 +84,9 @@ function processTerminalOutputArray(terminalOutputArray) {
   let state = JSON.parse(JSON.stringify(directories));
   let rootSpace = calcDirsSize(state, "/", 0);
   let minReq = 30000000 - (70000000 - rootSpace);
-  let canDelete = [];
+
   let part1Sum = 0;
+  let part2Min = 70000000;
   for (let key in directories) {
     let state = JSON.parse(JSON.stringify(directories));
     let dirSize = calcDirsSize(state, key, 0);
@@ -93,13 +94,8 @@ function processTerminalOutputArray(terminalOutputArray) {
       part1Sum += dirSize;
     }
 
-    if (dirSize >= minReq) canDelete.push(dirSize);
+    if (dirSize >= minReq && dirSize <= part2Min) part2Min = dirSize;
   }
-
-  let part2Min = 70000000;
-  canDelete.forEach((s) => {
-    if (s <= part2Min) part2Min = s;
-  });
 
   return {
     part1Result: part1Sum,
