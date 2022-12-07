@@ -52,4 +52,4 @@ for move in moves_idx:
 
 print('Merge it')
 solution = [stack[-1] for stack in stack_lists if len(stack)>0]
-print(str(solution))
+print(''.join(solution))
