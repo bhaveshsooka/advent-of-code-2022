@@ -40,8 +40,6 @@ function processTreesArray(treesArray) {
     forest.push(iRowArray);
   });
 
-  console.log(forest);
-
   let numVisibleTrees = 0;
   let maxScenicScore = 0;
 
