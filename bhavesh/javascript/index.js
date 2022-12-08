@@ -7,6 +7,7 @@ import { day4 } from "./aoc-2022/day-4-camp-cleanup.js";
 import { day5 } from "./aoc-2022/day-5-supply-stacks.js";
 import { day6 } from "./aoc-2022/day-6-tuning-trouble.js";
 import { day7 } from "./aoc-2022/day-7-no-space-left-on-device.js";
+import { day8 } from "./aoc-2022/day-8-treetop-tree-house.js";
 
 let answers = [];
 
@@ -17,5 +18,6 @@ await day4().then((answer) => answers.push(answer));
 await day5().then((answer) => answers.push(answer));
 await day6().then((answer) => answers.push(answer));
 await day7().then((answer) => answers.push(answer));
+await day8().then((answer) => answers.push(answer));
 
 console.log(answers);
