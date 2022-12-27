@@ -17,30 +17,25 @@ lines = [line.strip() for line in lines]
 # lprint(lines)
 
 valves = []
-rates = []
-toValves = []
+rate = {}
+paths = {}
 
 for line in lines:
     VT = line.split(';')
     V = VT[0].split()
     valves.append(V[1]) 
-    rates.append(int(V[-1].split('=')[-1]))
-    toValves.append([tunnel.strip(',') for tunnel in VT[1].split()[4:]]) 
-
-# print(valves)
-# print(rates)
-# print(toValves)
-# print(*list(zip(valves,rates)),sep='\n')
+    valve = V[1]
+    paths[valve] = [tunnel.strip(',') for tunnel in VT[1].split()[4:]]
+    rate[valve] = int(V[-1].split('=')[-1])
 
 # Initial numbers 
 tunnels = [[math.inf]*len(valves) for _ in valves]
-for idx,fromValve in enumerate(valves):
-    # print('From: ',fromValve)
-    for toValve in toValves[idx]:
-        # print('To: ',toValve)
-        tunnels[valves.index(fromValve)][valves.index(toValve)] = 1
+for idx1,fromValve in enumerate(valves):
+    for toValve in paths[fromValve]:
+        tunnels[idx1][valves.index(toValve)] = 1
 
 # lprint(tunnels)
+
 for _ in range(len(valves)):
     for fromValve in valves:
         for toValve in valves:
@@ -55,59 +50,93 @@ for _ in range(len(valves)):
                         new = tunnels[valves.index(fromValve)][valves.index(toValve)] + tunnels[valves.index(toValve)][idx]
                         if new<old:
                             tunnels[valves.index(fromValve)][idx] = new
-    # lprint(tunnels)
-    # input()
 
 for idx1, fromValve in enumerate(valves):
-    # print(f'from {fromValve}')
     for idx2,toValve in enumerate(valves):
-        # print(f'\tto {toValve}')
-        if rates[idx2]<=0:
+        if rate[toValve]<=0:
             tunnels[idx1][idx2] = math.inf
 
-lprint(tunnels)
+lprint(list(zip(valves,tunnels)))
+jprint(rate)
 
-def merge(tunnels,rates,minute):
-    assert len(tunnels)==len(rates)
-    l = len(rates)
-    
-    display = [[-math.inf]*l for _ in range(l)]
-    for fromIdx in range(l):
-        for toIdx in range(l):
-            if tunnels[fromIdx][toIdx]!=math.inf:
-                display[fromIdx][toIdx] = (minute-tunnels[fromIdx][toIdx]-1)*rates[toIdx]
-    
-    return display
+all_open = len([val for key,val in rate.items() if val >0])
+print(all_open)
+# jprint(paths)
 
-CD = 30
-currentValve = valves[0]
-valveTime = []
-# for minute in range(CD,0-1,-1):
-minute = CD
-print(f'Minute {CD-minute}')
-input()
-while ((minute>=0) and (sum(rates) >0)):
-    print(f'at {currentValve}',rates)
-    display = merge(tunnels,rates,minute)
-    # print(rates)
-    lprint(display)
-    top = max([val for val in display[valves.index(currentValve)] if val != math.inf]) 
-    bestValveIdx = display[valves.index(currentValve)].index(top)
-    # bestValveIdx = valves.index(input('best valve idx: '))
-    # top = display[valves.index(currentValve)][bestValveIdx]
+tunnel_paths = {}
+for valve,tunnel_list in zip(valves,tunnels):
+    tunnel_paths[valve] = {}
+    for t_valve, t_time in zip(valves,tunnel_list):
+        if t_time != math.inf:
+            tunnel_paths[valve][t_valve] = t_time
 
-    minute = minute-tunnels[valves.index(currentValve)][bestValveIdx]-1 
-    currentValve = valves[bestValveIdx]
-    print(f'Minute {CD-minute} open valve {valves[bestValveIdx]}')
-    valveTime.append((currentValve, rates[bestValveIdx], minute, top))
-    rates[bestValveIdx] = 0
-    print(minute)
-    input()
+jprint(tunnel_paths)
 
-display = merge(tunnels,rates,minute)
-lprint(display)
-lprint(valveTime)
-lprint(tunnels)
+from collections import deque
+from copy import deepcopy
+EOD = {valve:{int(t):-math.inf for t in range(30+1)} for valve in valves}
+# jprint(EOD)
+Q = deque()
+max_pressure = 0
+Q.append(('AA',0,[],0,0,''))
+i = 0
+while len(Q):
+    i += 1
+    if i%100_000 == 0:
+        i = 0
+        print(f'current max: {max_pressure}')
+        # input()
+    state = Q.pop()
+    print(state[:-1])
+    # input()
+    valve = state[0]
+    minutes = state[1]
+    opened_valves = deepcopy(state[2])
+    opened_rate = state[3]
+    pressure_before = state[4]
+    logs = state[5]
+    if minutes >30:
+        continue
+    if minutes == 30 and pressure_before>max_pressure:
+        max_pressure = pressure_before
+        print(f'New max {max_pressure} {50*"*"}')
+        print(logs)
+        # input()
+        continue
+    for toValve, duration in tunnel_paths[valve].items():
+        if rate[toValve]!=0 and toValve not in opened_valves:
+            # go to valve, takes n minutes so add opened rate to initial pressure n times
+            # n = tunnels[valves.index(valve)][valves.index(toValve)]
+            # print(f'from {valve} to {toValve} in {duration} minutes')
+            pressure_after = pressure_before + duration*opened_rate
+            newlogs = logs + f'@{minutes} take {duration} mins to go to {toValve} rate:{opened_rate} pressure:{pressure_after}\n'
+            new_minutes = minutes+duration
+            if new_minutes<=30:
+                Q.append((toValve, new_minutes, opened_valves, opened_rate, pressure_after,newlogs))
+    if minutes<30 and len(opened_valves) >= all_open*0.5 and pressure_before > EOD[valve][minutes]:
+        EOD[valve][minutes] = pressure_before
 
-total = sum([VT[3] for VT in valveTime])
-print(total)
+        pressure_after = pressure_before+opened_rate
+        newlogs = logs + f'@{minutes} Running all @{valve} rate: {opened_rate} pressure:{pressure_after}\n'
+        new_minutes = minutes+1
+        if new_minutes<=30:
+            Q.append((valve, new_minutes, opened_valves, opened_rate, pressure_after,newlogs))
+        # print(opened_valves, newlogs)
+    if valve not in opened_valves and rate[valve]!=0:
+        # open valve, takes 1 minute, pressure rate is constant, total pressure increase by opened rate before adding new pressure
+        # print(f'open valve {valve}')
+        opened_valves.append(valve)
+        pressure_after = pressure_before+opened_rate
+        opened_rate += rate[valve]
+        # print(f'opened rate changed to {opened_rate}')
+        newlogs = logs + f'@{minutes} take 1 min to open {valve}\n'
+        Q.append((valve, minutes+1, opened_valves, opened_rate, pressure_after,newlogs))
+
+    del valve
+    del minutes
+    del opened_valves
+    del opened_rate
+    del pressure_before
+    del logs
+
+print(max_pressure)
