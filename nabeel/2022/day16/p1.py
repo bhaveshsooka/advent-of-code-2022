@@ -74,8 +74,7 @@ jprint(tunnel_paths)
 
 from collections import deque
 from copy import deepcopy
-EOD = {valve:{int(t):-math.inf for t in range(30+1)} for valve in valves}
-# jprint(EOD)
+memo = {}
 Q = deque()
 max_pressure = 0
 Q.append(('AA',0,[],0,0,''))
@@ -87,7 +86,6 @@ while len(Q):
         print(f'current max: {max_pressure}')
         # input()
     state = Q.pop()
-    print(state[:-1])
     # input()
     valve = state[0]
     minutes = state[1]
@@ -95,8 +93,10 @@ while len(Q):
     opened_rate = state[3]
     pressure_before = state[4]
     logs = state[5]
-    if minutes >30:
+    if minutes >30 or str((valve,opened_valves,minutes)) in memo.keys():
         continue
+    print(max_pressure, state[:-1])
+    memo[str((valve,opened_valves,minutes))]=minutes
     if minutes == 30 and pressure_before>max_pressure:
         max_pressure = pressure_before
         print(f'New max {max_pressure} {50*"*"}')
@@ -113,9 +113,7 @@ while len(Q):
             new_minutes = minutes+duration
             if new_minutes<=30:
                 Q.append((toValve, new_minutes, opened_valves, opened_rate, pressure_after,newlogs))
-    if minutes<30 and len(opened_valves) >= all_open*0.5 and pressure_before > EOD[valve][minutes]:
-        EOD[valve][minutes] = pressure_before
-
+    if minutes<30 and (len(opened_valves)>=30/4 or len(opened_valves)==all_open):
         pressure_after = pressure_before+opened_rate
         newlogs = logs + f'@{minutes} Running all @{valve} rate: {opened_rate} pressure:{pressure_after}\n'
         new_minutes = minutes+1
